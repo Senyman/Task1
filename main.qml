@@ -13,4 +13,11 @@ ApplicationWindow {
     visible: true
     title: qsTr("App")  // Название окна
     color: "#1B242F"
+
+    CommonButton {
+        id: log_in
+        text: "Log in"
+        onClicked: {
+        }
+    }
 }
