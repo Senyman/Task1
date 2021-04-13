@@ -1,32 +1,33 @@
 import QtQuick 2.0
 
 Item {
-    id: showSalaryItem
+    id: item
     property int size: 100
     property color color: "#213141"
-    property alias text: showSalaryCaptionButton.text   // text = showSalaryCaptionButton.text
+    property alias text: text.text        // Текст кнопки, связан с объектом Text и ключевым словом text: в main файле
 
     width: parent.width /5
     height: parent.height / 16
 
-    signal clicked()
+    signal clicked()                            // Для связи с onClicked:  в main файле
+
     Rectangle {
-        id: button
+        id: rec
         //opacity: 1
         anchors.fill: parent
         radius: width /25
-        color: showSalaryMouseArea.containsPress ? Qt.darker(showSalaryItem.color, 0.8 ): showSalaryItem.color // Затемнение при нажатии и цвет кнопки по умолчанию
+        color: mouseArea.containsPress ? Qt.darker(item.color, 0.8 ): item.color // Для затемнения при нажатии
         Text {
-            id: showSalaryCaptionButton
+            id: text
             anchors.centerIn: parent
-            text: qsTr("Show Salary")
+            text: qsTr(" ")
             color: "#aeb0b6"
         }
         MouseArea {
-            id: showSalaryMouseArea
+            id: mouseArea
             anchors.fill: parent
             onClicked: {
-                showSalaryItem.clicked()
+                item.clicked()              // Для связи с signal clicked
             }
         }
     }
