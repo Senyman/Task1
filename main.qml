@@ -4,8 +4,12 @@ import QtQuick.Controls 2.12  // Для объекта Button
 
 ApplicationWindow {
     id: loginWindow
-    width: 640
-    height: 480
+    maximumWidth: 1000
+    minimumWidth: 1000
+    maximumHeight: 800
+    minimumHeight: 800
+    // width: 640
+    // height: 480
     visible: true
     title: qsTr("App")  // Название окна
     color: "#1B242F"
