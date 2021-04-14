@@ -12,7 +12,8 @@ int main(int argc, char *argv[])
 
 
     MainCode maincode;
-
+    QQmlContext *context = engine.rootContext();                    // Для соединения main.qml и maincode.h/cpp
+    context->setContextProperty("MainCode", & maincode);
 
 
 

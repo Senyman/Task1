@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QQmlContext>
 
 class MainCode : public QObject
 {
