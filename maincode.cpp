@@ -23,11 +23,12 @@ void MainCode::logIn(QString login, QString password)
             qDebug() << "Your login and password are correct ";
             qDebug() << login;  // Отладочная
             qDebug() << password;
+            emit sendErrorMessage("Работает!!!");
 #endif
         }
         if(count<1)  {
             qDebug() <<"Your login or password isn't correct";
-
+            emit sendErrorMessage("Неправильно введен логин или пароль");
         }
     }
 

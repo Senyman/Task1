@@ -10,8 +10,15 @@ ApplicationWindow {
     maximumHeight: 500
     minimumHeight: 500
     visible: true
-    title: qsTr("App")
+    title: qsTr("Log In")
     color: "#1B242F"
+
+    Connections {                   // Для связи сигнала из C++ с текстовым полем errorMessage в qml
+        target: MainCode
+        onSendErrorMessage: {
+            errorMessage.text =  errorMesage
+        }
+    }
 
     ColumnLayout {
 
@@ -39,7 +46,7 @@ ApplicationWindow {
         }
         Label {
             id: errorMessage
-            text: "Неправильно введен логин или пароль"
+            // text: "Неправильно введен логин или пароль"
             color: "#aeb0b6"
             font.pointSize: 8
         }
