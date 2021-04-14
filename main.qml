@@ -28,17 +28,17 @@ ApplicationWindow {
             height: 10
         }
         TextField {
-            id: beginDate
+            id: login
             placeholderText: "Логин"
             //Layout.fillWidth: true
         }
         TextField {
-            id: endDate
+            id: password
             placeholderText: "Пароль"
             //Layout.fillWidth: true
         }
         Label {
-            id: salary
+            id: errorMessage
             text: "Неправильно введен логин или пароль"
             color: "#aeb0b6"
             font.pointSize: 8
@@ -47,12 +47,12 @@ ApplicationWindow {
             height: 10
         }
         CommonButton {          // Moveback button
-            id: calculateAllSalary
+            id: enter
             width: 200
             height: 25
             text: "Войти"
             onClicked: {
-
+                MainCode.logIn(login.text, password.text)
             }
        }
     }
