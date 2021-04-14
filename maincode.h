@@ -19,6 +19,7 @@ public:
 
 signals:
     void sendErrorMessage (QString errorMesage);
+    void openMainMenu();
 
 public slots:
     void logIn(QString, QString);

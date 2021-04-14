@@ -23,7 +23,8 @@ void MainCode::logIn(QString login, QString password)
                 qDebug() << "Your login and password are correct ";
                 qDebug() << login;  // Отладочная
                 qDebug() << password;
-                emit sendErrorMessage("Работает!!!");
+                emit  sendErrorMessage("Работает!!!");
+                emit  openMainMenu(); // Добавить сигнал для открытия второго окна
 #endif
                 }
                 if(count<1)  {

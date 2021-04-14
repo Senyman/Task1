@@ -18,6 +18,10 @@ ApplicationWindow {
         onSendErrorMessage: {
             errorMessage.text =  errorMesage
         }
+        onOpenMainMenu: {
+            mainMenuWindow.show()
+            loginWindow.hide()
+        }
     }
 
     ColumnLayout {
@@ -63,4 +67,16 @@ ApplicationWindow {
             }
        }
     }
+
+    MainMenu {
+        id: mainMenuWindow
+        title: qsTr("Главное окно")
+
+        onGoToLoginWindow:
+        {
+            mainMenuWindow.close()
+            loginWindow.show()
+        }
+    }
+
 }
