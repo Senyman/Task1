@@ -11,11 +11,21 @@ Window {
     minimumHeight: 800
     title: qsTr("Приложение")
     color: "#1B242F"
-
     signal goToLoginWindow
 
-    StackView
-    {
+    Connections {                        // Для связи C++ и qml
+        target: MainCode              // Связываем
+        onSendSalaryToQML: {
+            salary.text = "Зарплата рабочего составляет: " + count + " рублей "  // Сюда задается текст
+        }
+        onOpenMainMenu: {
+            loginText.text = "Логин: " + loginForQML
+            nameText.text = "Имя: " + nameForQML
+        }
+
+    }
+
+    StackView {
         id: stackView
         anchors.fill: parent
         initialItem: mainMenuPage     // Запускаем первую страницу
@@ -45,7 +55,7 @@ Window {
                 text: "Показать подчиненных"
                 fontSize: 10
                 onClicked: {
-
+                    stackView.push(subordinatesPage);
                 }
            }
 
@@ -81,16 +91,16 @@ Window {
 
             ColumnLayout {
                 Text {
-                    id: snameText
+                    id: loginText
                     font.pointSize: 12
-                    text: qsTr("Логин: Канвальд")
+                    //text: qsTr("Логин: Канвальд")
                     color: "#aeb0b6"
                 }
 
                 Text {
                     id: nameText
                     font.pointSize: 12
-                    text: qsTr("Имя: Йонас")
+                   // text: qsTr("Имя: Йонас")
                     color: "#aeb0b6"
                 }
 
@@ -157,7 +167,6 @@ Window {
                 }
                 Label {
                     id: salary
-                    text: "Зарплата рабочего составляет: 125000 рублей"
                     color: "#aeb0b6"
                     font.pointSize: 14  // fontsize
                     font.bold: true
@@ -192,12 +201,28 @@ Window {
                     text: "Calculate"
                     Layout.rightMargin: 20
                     onClicked: {
-                        MainCode.DataFromQMLforCountSalary(beginDate.text, endDate.text, name.text )
+                        MainCode.ReceiveDataFromQMLforCountSalary(beginDate.text, endDate.text, name.text )
                     }
                 }
              }
         }   // Column
-    }   // TemplatePage
+    }
+
+    TemplatePage {                            // Страница со списком подчиненных
+        id: subordinatesPage
+        visible: false
+
+        CommonButton {                    // Кнопка для возвращения в главное меню
+            id: showMainMenuFromSubordinatesPage
+            text: "<"
+            width: allWindows.width /16
+            height: allWindows.width / 16
+            color: "#00000000"
+            onClicked: {
+                stackView.pop()
+            }
+        }
+    }
 }
 
 

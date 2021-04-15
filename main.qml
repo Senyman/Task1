@@ -21,6 +21,7 @@ ApplicationWindow {
         onOpenMainMenu: {
             allWindows.show()
             loginWindow.hide()
+
         }
     }
 
