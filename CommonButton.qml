@@ -5,6 +5,7 @@ Item {
     property int size: 100
     property color color: "#213141"
     property alias text: text.text        // Текст кнопки, связан с объектом Text и ключевым словом text: в main файле
+    property alias fontSize: text.font.pointSize
 
     width: parent.width /5
     height: parent.height / 16

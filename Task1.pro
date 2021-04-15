@@ -13,7 +13,7 @@ SOURCES += \
 RESOURCES += qml.qrc
 
 OTHER_FILES += \
-    MainMenu.qml
+    AllWindows.qml
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -29,6 +29,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     maincode.h
 
-DISTFILES +=
+DISTFILES += \
+    CountSalaryWindow.qml
 
 

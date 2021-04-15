@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>CommonButton.qml</file>
-        <file>MainMenu.qml</file>
+        <file>AllWindows.qml</file>
+        <file>TemplatePage.qml</file>
     </qresource>
 </RCC>

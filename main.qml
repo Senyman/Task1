@@ -10,7 +10,7 @@ ApplicationWindow {
     maximumHeight: 500
     minimumHeight: 500
     visible: true
-    title: qsTr("Log In")
+    title: qsTr("Авторизация")
     color: "#1B242F"
 
     Connections {                   // Для связи сигнала из C++ с текстовым полем errorMessage в qml
@@ -19,7 +19,7 @@ ApplicationWindow {
             errorMessage.text =  errorMesage
         }
         onOpenMainMenu: {
-            mainMenuWindow.show()
+            allWindows.show()
             loginWindow.hide()
         }
     }
@@ -68,13 +68,12 @@ ApplicationWindow {
        }
     }
 
-    MainMenu {
-        id: mainMenuWindow
-        title: qsTr("Главное окно")
+    AllWindows {
+        id: allWindows
 
         onGoToLoginWindow:
         {
-            mainMenuWindow.close()
+            allWindows.close()
             loginWindow.show()
         }
     }
