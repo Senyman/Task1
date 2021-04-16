@@ -22,7 +22,6 @@ Window {
             loginText.text = "Логин: " + loginForQML
             nameText.text = "Имя: " + nameForQML
         }
-
     }
 
     StackView {
@@ -56,10 +55,11 @@ Window {
                 fontSize: 10
                 onClicked: {
                     stackView.push(subordinatesPage);
+                    MainCode.createWorkers()
                 }
            }
 
-            CommonButton {             // Показать подчиненных
+            CommonButton {             // Добавить рабочего
                 id: goToAddWorkersWindowButton
                 width: 300
                 height: 35

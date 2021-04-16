@@ -9,7 +9,7 @@
 #include <QFileInfo>
 #include <iostream>
 #include <QString>
-#define DEBUG
+// #define DEBUG
 
 using namespace std;
 
@@ -36,11 +36,12 @@ public:
 signals:
     void sendErrorMessage (QString errorMesage);
     void openMainMenu(QString nameForQML, QString loginForQML);
-    void sendSalaryToQML (int count); // Сигнал, для передачи данных в qml-интерфейс
+    void sendSalaryToQML (int count);                                                               // Сигнал, для передачи данных в qml-интерфейс
 
 public slots:
     void logIn(QString, QString);
     void ReceiveDataFromQMLforCountSalary(QString, QString, QString);
+    void createWorkers();
 
 };
 

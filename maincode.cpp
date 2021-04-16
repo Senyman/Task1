@@ -1,27 +1,36 @@
 #include "maincode.h"
 
-
 class Worker
 {
 public:
+    int id;
     QString name;
-    double years;        // Изменить это !!!!! В данный момент это количество лет, проведенных на работе в этой фирме
-    double salary = 0;          // з/п
-    double baseRate = 1000;
+    QString firstDayDate;
+    int baseRate = 1000;
+    QString typeOfWorker;
+    QString login;
+    int chiefId;
+    double salary = 0;
     int workDays = 0;
-    QString chief;
+
+    double years;        // Изменить это !!!!! В данный момент это количество лет, проведенных на работе в этой фирме
 
     virtual double CountSalary(double years, double baseRate, QString beginDate, QString endDate) { return 666; }
 };
 
-class Employee : public Worker
-{
+class Employee : public Worker {
 public:
-    Employee(QString name) {
+    Employee(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+        this-> id = id;
         this->name = name;
+        this->firstDayDate = firstDayDate;
+        this->baseRate = baseRate;
+        this->typeOfWorker = typeOfWorker;
+        this->login = login;
+        this->chiefId =chiefId;
     }
-    double CountSalary(double years, double baseRate, QString beginDate, QString endDate)
-    {
+
+    double CountSalary(double years, double baseRate, QString beginDate, QString endDate) {
         workDays = CounterWorkDays(beginDate, endDate);
         double salary;
         this->baseRate = baseRate;
@@ -42,8 +51,14 @@ public:
 class Manager : public Worker
 {
 public:
-    Manager(QString name) {
+    Manager(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+        this-> id = id;
         this->name = name;
+        this->firstDayDate = firstDayDate;
+        this->baseRate = baseRate;
+        this->typeOfWorker = typeOfWorker;
+        this->login = login;
+        this->chiefId =chiefId;
     }
     int numberOfSubordinatesFirst = 2;     // Количество подчиненных первого уровня !!!!
     //  double CountSalary(double years, double baseRate, int numberOfSubordinatesFirst, QString beginDate, QString endDate) // убрал одну переменную ради эксперимента
@@ -69,8 +84,14 @@ public:
 class Sales :public Worker
 {
 public:
-    Sales(QString name) {
+    Sales(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+        this-> id = id;
         this->name = name;
+        this->firstDayDate = firstDayDate;
+        this->baseRate = baseRate;
+        this->typeOfWorker = typeOfWorker;
+        this->login = login;
+        this->chiefId =chiefId;
     }
     int numberOfSubordinatesFirst;     // Количество подчиненных первого уровня
     int numberOfSubordinatesSecond;
@@ -110,6 +131,7 @@ void MainCode::logIn(QString login, QString password) {                         
 
         if(qry.exec("SELECT * FROM WorkersTable WHERE Login = '"+login+"' and Password = '"+password+"' ")) {
                 while(qry.next()) {
+                    idForQML = qry.value(0).toInt();
                     nameForQML = qry.value(1).toString();
                     loginForQML = qry.value(5).toString();
                     count++;
@@ -141,9 +163,9 @@ void MainCode::logIn(QString login, QString password) {                         
 void MainCode::ReceiveDataFromQMLforCountSalary(QString beginDate, QString endDate, QString name)
 {
     vector<shared_ptr<Worker>> workers = {      // Массив, который хранит элементы типа <shared_ptr<Worker>>
-        make_shared<Employee>( "Иван"),
-        make_shared<Manager>("Сергей"),
-        make_shared<Sales>("Дмитрий")
+//        make_shared<Employee>( "Иван"),
+//        make_shared<Manager>("Сергей"),
+//        make_shared<Sales>("Дмитрий")
     };
 
 for( auto &a: workers) {
@@ -559,13 +581,45 @@ int CounterWorkDays(QString beginDate, QString endDateFromQML)
     return amountOfWorkingDays;
 }
 
-void MainCode::CreateWorkers()
-{
-    vector<shared_ptr<Worker>> workers = {      // Массив, который хранит элементы типа <shared_ptr<Worker>>
-//        make_shared<Employee>( "Иван"),
-//        make_shared<Manager>("Сергей"),
-//        make_shared<Sales>("Дмитрий")
-    };
+void MainCode::createWorkers() {
+    vector<shared_ptr<Worker>> workers = {};   // Массив, который хранит элементы типа <shared_ptr<Worker>>
 
+    int idForArr;                                                    // Переменные для занесения в массив с работниками
+    QString nameForArr;
+    QString firstDayDateForArr;
+    int baseSalaryForArr;
+    QString typeOfWorkerForArr;
+    QString loginForArr;
+    int chiefIdForArr;
+    {
+        count = 0;
+        QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");                              // Создаем объект для работы с базой данных
+        workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");   // Указываю путь к базе данных
+        if(!workersDB.open()) qDebug() << "Failed to open database";
+        else qDebug() << "DataBase is connected";
+        QSqlQuery qry;                                                                                                                        // Объект для запроса информации из БД
 
+        if(qry.exec("SELECT * FROM WorkersTable ")) {
+                while(qry.next()) {
+                    idForArr = qry.value(0).toInt();
+                    nameForArr = qry.value(1).toString();
+                    firstDayDateForArr = qry.value(2).toString();
+                    baseSalaryForArr = qry.value(3).toInt();
+                    typeOfWorkerForArr = qry.value(4).toString();
+                    loginForArr = qry.value(5).toString();
+                    chiefIdForArr = qry.value(6).toInt();
+                    count++;
+                    // qDebug() << idForArr <<" "<< nameForArr <<" "<<firstDayDateForArr << " "<<baseSalaryForArr <<" "<<typeOfWorkerForArr << " "<<loginForArr;
+
+                    if(typeOfWorkerForArr == "Employee") workers.push_back(make_shared<Employee>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr));
+                    else if (typeOfWorkerForArr == "Sales") workers.push_back(make_shared<Sales>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr));
+                    else if(typeOfWorkerForArr == "Manager") workers.push_back(make_shared<Manager>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr));
+                }
+        }
+        workersDB.close();
+    }
+    QSqlDatabase::removeDatabase("qt_sql_default_connection");
+    for( auto &a: workers) {
+        // qDebug() << a->id << " " << a->name<< ""<<a->firstDayDate << " " << a->baseRate << " " << a->typeOfWorker << " " << a->login << " " << a->chiefId<< " " ;
+    }
 }
