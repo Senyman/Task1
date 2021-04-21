@@ -3,6 +3,7 @@ import QtQuick.Controls 2.12    // Для StackView
 import QtQuick.Window 2.12
 import QtQuick.Layouts 1.12
 
+
 Window {
     id: allWindows
     maximumWidth: 1200
@@ -13,6 +14,8 @@ Window {
     color: "#1B242F"
     signal goToLoginWindow
 
+    property int myMargin: 10
+
     Connections {                        // Для связи C++ и qml
         target: MainCode              // Связываем
         onSendSalaryToQML: {
@@ -21,6 +24,11 @@ Window {
         onOpenMainMenu: {
             loginText.text = "Логин: " + loginForQML
             nameText.text = "Имя: " + nameForQML
+        }
+        onSendSubordinatesInfoToQML: {
+            listModel.append({idOfSubordinate: "Id: " + idSub, nameOfSubordinate: "Имя: " + nameSub, typeOfSubordinate: "Тип рабочего: " + typeOfWorkerSub,
+                                 firstDayDateOfSubordinate: "Дата первого рабочего дня: " + firstDayDateSub, baseRateOfSubordinate: "Дневная ставка: " + baseRateSub,
+                                 chiefIdOfSubordinate: "Id начальника: " + chiefIdSub});
         }
     }
 
@@ -55,7 +63,7 @@ Window {
                 fontSize: 10
                 onClicked: {
                     stackView.push(subordinatesPage);
-                    MainCode.createWorkers()
+                    MainCode.findSubordinates()
                 }
            }
 
@@ -201,7 +209,7 @@ Window {
                     text: "Calculate"
                     Layout.rightMargin: 20
                     onClicked: {
-                        MainCode.ReceiveDataFromQMLforCountSalary(beginDate.text, endDate.text, name.text )
+                        MainCode.receiveDataFromQMLforCountSalary(beginDate.text, endDate.text, name.text )
                     }
                 }
              }
@@ -212,15 +220,78 @@ Window {
         id: subordinatesPage
         visible: false
 
-        CommonButton {                    // Кнопка для возвращения в главное меню
-            id: showMainMenuFromSubordinatesPage
-            text: "<"
-            width: allWindows.width /16
-            height: allWindows.width / 16
-            color: "#00000000"
-            onClicked: {
-                stackView.pop()
+        ColumnLayout {
+            CommonButton {                    // Кнопка для возвращения в главное меню
+                id: showMainMenuFromSubordinatesPage
+                text: "<"
+                width: allWindows.width /16
+                height: allWindows.width / 16
+                color: "#00000000"
+                z: +1
+                onClicked: {
+                    listModel.clear()
+                    stackView.pop()
+                }
             }
+
+
+        }
+
+
+
+        ListView {      // Список всех подчиненных всех уровней
+            id: listSubordinates
+            anchors.fill: parent
+            spacing: 4
+            ScrollBar.vertical: ScrollBar {}
+
+            model: listModel
+
+            delegate: Rectangle {
+                id: mainRec
+                height: 240
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins:  200
+                color: "#213141"
+                border.color: "black"
+
+                TextForSubordinates {
+                    id: idText
+                    anchors.top:  mainRec.top
+                    text: model.idOfSubordinate
+                }
+                TextForSubordinates {
+                    id: textName
+                    anchors.top: idText.bottom
+                    text: model.nameOfSubordinate
+                }
+                TextForSubordinates {
+                    id: textType
+                    anchors.top: textName.bottom
+                    text: model.typeOfSubordinate
+                }
+                TextForSubordinates {
+                    id: textBeginData
+                    anchors.top: textType.bottom
+                    text: model.firstDayDateOfSubordinate
+                }
+                TextForSubordinates {
+                    id: textRate
+                    anchors.top: textBeginData.bottom
+                    text: model.baseRateOfSubordinate
+                }
+                TextForSubordinates {
+                    id: chiefId
+                    anchors.top: textRate.bottom
+                    text: model.chiefIdOfSubordinate
+                }
+            }
+        }
+
+
+        ListModel {
+            id: listModel
         }
     }
 }

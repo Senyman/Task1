@@ -4,5 +4,6 @@
         <file>CommonButton.qml</file>
         <file>AllWindows.qml</file>
         <file>TemplatePage.qml</file>
+        <file>TextForSubordinates.qml</file>
     </qresource>
 </RCC>

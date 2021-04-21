@@ -1,120 +1,5 @@
 #include "maincode.h"
 
-class Worker
-{
-public:
-    int id;
-    QString name;
-    QString firstDayDate;
-    int baseRate = 1000;
-    QString typeOfWorker;
-    QString login;
-    int chiefId;
-    double salary = 0;
-    int workDays = 0;
-
-    double years;        // Изменить это !!!!! В данный момент это количество лет, проведенных на работе в этой фирме
-
-    virtual double CountSalary(double years, double baseRate, QString beginDate, QString endDate) { return 666; }
-};
-
-class Employee : public Worker {
-public:
-    Employee(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
-        this-> id = id;
-        this->name = name;
-        this->firstDayDate = firstDayDate;
-        this->baseRate = baseRate;
-        this->typeOfWorker = typeOfWorker;
-        this->login = login;
-        this->chiefId =chiefId;
-    }
-
-    double CountSalary(double years, double baseRate, QString beginDate, QString endDate) {
-        workDays = CounterWorkDays(beginDate, endDate);
-        double salary;
-        this->baseRate = baseRate;
-        this->years = years;
-        if (years>=10)
-        {
-            salary = baseRate * workDays + baseRate * workDays * 0.3;
-        }
-        else
-        {
-            salary = baseRate* workDays + baseRate * workDays * years * 0.05;
-        }
-         qDebug() << "Зарплата рабочего равна: " << salary << " рублей";
-        return salary;
-    }
-};
-
-class Manager : public Worker
-{
-public:
-    Manager(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
-        this-> id = id;
-        this->name = name;
-        this->firstDayDate = firstDayDate;
-        this->baseRate = baseRate;
-        this->typeOfWorker = typeOfWorker;
-        this->login = login;
-        this->chiefId =chiefId;
-    }
-    int numberOfSubordinatesFirst = 2;     // Количество подчиненных первого уровня !!!!
-    //  double CountSalary(double years, double baseRate, int numberOfSubordinatesFirst, QString beginDate, QString endDate) // убрал одну переменную ради эксперимента
-
-    double CountSalary(double years, double baseRate, QString beginDate, QString endDate)        // Количество подчиненных первого уровня
-    {
-        double salary;
-        this->baseRate = baseRate;
-        this->years = years;
-        this->numberOfSubordinatesFirst = numberOfSubordinatesFirst;
-        if (years >= 8)
-        {
-            salary = baseRate * CounterWorkDays(beginDate, endDate) + baseRate * CounterWorkDays(beginDate, endDate) * 0.4 + baseRate * CounterWorkDays(beginDate, endDate) *0.005* numberOfSubordinatesFirst;
-        }
-        else
-        {
-            salary = baseRate * CounterWorkDays(beginDate, endDate) + baseRate* CounterWorkDays(beginDate, endDate) * years * 0.05+0.005 * numberOfSubordinatesFirst * baseRate;
-        }
-        return salary;
-    }
-};
-
-class Sales :public Worker
-{
-public:
-    Sales(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
-        this-> id = id;
-        this->name = name;
-        this->firstDayDate = firstDayDate;
-        this->baseRate = baseRate;
-        this->typeOfWorker = typeOfWorker;
-        this->login = login;
-        this->chiefId =chiefId;
-    }
-    int numberOfSubordinatesFirst;     // Количество подчиненных первого уровня
-    int numberOfSubordinatesSecond;
-    double CountSalary(double years, double baseRate, int numberOfSubordinates, int numberOfSubordinatesSecond, QString beginDate, QString endDate)        // Количество всех подчиненных
-    {
-        double salary;
-        this->baseRate = baseRate;
-        this->years = years;
-        this->numberOfSubordinatesFirst = numberOfSubordinatesFirst;
-        this->numberOfSubordinatesSecond = numberOfSubordinatesSecond;
-        if (years >= 8)
-        {
-            salary = baseRate* CounterWorkDays(beginDate, endDate) + baseRate * CounterWorkDays(beginDate, endDate) * 0.4 + baseRate* CounterWorkDays(beginDate, endDate) * 0.005 * (numberOfSubordinates+ numberOfSubordinatesSecond);
-        }
-        else
-        {
-            salary = baseRate * CounterWorkDays(beginDate, endDate) + baseRate * CounterWorkDays(beginDate, endDate) * years * 0.05 + 0.005 * (numberOfSubordinates + numberOfSubordinatesSecond);
-        }
-        return salary;
-    }
-};
-
-
 MainCode::MainCode(QObject *parent) : QObject(parent)
 {
   count = 0;
@@ -160,7 +45,7 @@ void MainCode::logIn(QString login, QString password) {                         
     QSqlDatabase::removeDatabase("qt_sql_default_connection");
 }
 
-void MainCode::ReceiveDataFromQMLforCountSalary(QString beginDate, QString endDate, QString name)
+void MainCode::receiveDataFromQMLforCountSalary(QString beginDate, QString endDate, QString name)
 {
     vector<shared_ptr<Worker>> workers = {      // Массив, который хранит элементы типа <shared_ptr<Worker>>
 //        make_shared<Employee>( "Иван"),
@@ -581,16 +466,20 @@ int CounterWorkDays(QString beginDate, QString endDateFromQML)
     return amountOfWorkingDays;
 }
 
-void MainCode::createWorkers() {
-    vector<shared_ptr<Worker>> workers = {};   // Массив, который хранит элементы типа <shared_ptr<Worker>>
-
+vector<shared_ptr<Worker>> MainCode::createWorkers() {
+    vector<shared_ptr<Worker>> workers;
     int idForArr;                                                    // Переменные для занесения в массив с работниками
     QString nameForArr;
     QString firstDayDateForArr;
     int baseSalaryForArr;
     QString typeOfWorkerForArr;
     QString loginForArr;
+    vector<int> chiefsid;
+
+
+    chiefsid.push_back(idForQML);
     int chiefIdForArr;
+    int chiefsCounter = 0;
     {
         count = 0;
         QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");                              // Создаем объект для работы с базой данных
@@ -607,7 +496,7 @@ void MainCode::createWorkers() {
                     baseSalaryForArr = qry.value(3).toInt();
                     typeOfWorkerForArr = qry.value(4).toString();
                     loginForArr = qry.value(5).toString();
-                    chiefIdForArr = qry.value(6).toInt();
+                    chiefIdForArr = qry.value(7).toInt();
                     count++;
                     // qDebug() << idForArr <<" "<< nameForArr <<" "<<firstDayDateForArr << " "<<baseSalaryForArr <<" "<<typeOfWorkerForArr << " "<<loginForArr;
 
@@ -619,7 +508,56 @@ void MainCode::createWorkers() {
         workersDB.close();
     }
     QSqlDatabase::removeDatabase("qt_sql_default_connection");
-    for( auto &a: workers) {
-        // qDebug() << a->id << " " << a->name<< ""<<a->firstDayDate << " " << a->baseRate << " " << a->typeOfWorker << " " << a->login << " " << a->chiefId<< " " ;
+    //for( auto &a: workers) {
+        //qDebug() << a->id << " " << a->name<< ""<<a->firstDayDate << " " << a->baseRate << " " << a->typeOfWorker << " " << a->login << " " << a->chiefId<< " " ;
+   // }
+
+    while(true) {
+
+        chiefsCounter = 0;
+
+        for(unsigned long long i = 0; i <chiefsid.size()-chiefsCounter; i++ ) {
+            for (unsigned long long j = 0; j < workers.size(); j++) {
+                if(chiefsid[i] == workers[j]->chiefId) {
+                    //qDebug() << workers[j]->name;
+                    chiefsid.push_back(workers[j]->id);
+
+                    idSub = QString::number(workers[j]->id);
+                    nameSub = workers[j]->name;
+                    typeOfWorkerSub = workers[j]->typeOfWorker;
+                    firstDayDateSub =  workers[j]->firstDayDate;
+                    baseRateSub = QString::number(workers[j]->baseRate);
+                    chiefIdSub = QString::number(workers[j]->chiefId);
+
+
+                    emit sendSubordinatesInfoToQML(idSub, nameSub, typeOfWorkerSub, firstDayDateSub, baseRateSub, chiefIdSub );               // Отправляем данные в QML для отображения в ListModel
+                    chiefsCounter++;
+                }
+            }
+        }
+            vector<int>::iterator chiefsIterator = chiefsid.begin();
+            unsigned long long previousSize = chiefsid.size() ;
+        for (unsigned long long i =0; i < previousSize - chiefsCounter; i++) {
+
+            chiefsid.erase(chiefsIterator);
+            chiefsIterator = chiefsid.begin();
+        }
+
+        for(vector<int>::iterator chiefsIterator = chiefsid.begin(); chiefsIterator != chiefsid.end(); chiefsIterator ++) {
+           // qDebug() << *chiefsIterator;
+        }
+        if(chiefsCounter == 0) break;
     }
+
+
+
+    return workers;
+}
+
+
+void MainCode::findSubordinates()
+{
+   //  qDebug() << idForQML;
+    createWorkers();
+
 }
