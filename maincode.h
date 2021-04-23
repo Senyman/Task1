@@ -22,16 +22,19 @@ using namespace std;
 // #include <windows.h>
 
  int CounterWorkDays(QString beginDate, QString endDate);
+ int CounterWorkYears(QString beginDate, QString endDate);
+
 
 class Worker
 {
 public:
-    int id;
+
     QString name;
     QString firstDayDate;
-    int baseRate = 1000;
     QString typeOfWorker;
     QString login;
+    int id;
+    int baseRate = 1000;
     int chiefId;
     double salary = 0;
     int workDays = 0;
@@ -138,11 +141,14 @@ public:
 };
 
 
+
+double CountSalary2(QString, QString, QString,  vector<shared_ptr<Worker>>);
+
 class MainCode : public QObject
 {
     Q_OBJECT
 public:
-    int count;
+    bool foundCoincidence;
     int idForQML;
     QString loginForQML;
     QString nameForQML;
@@ -155,12 +161,14 @@ public:
     QString firstDayDateSub;
     QString baseRateSub;
     QString chiefIdSub;
+    int levelOfSub = 0;
+    QString levelOfSubStr;
 
 signals:
     void sendErrorMessage (QString errorMesage);
     void openMainMenu(QString nameForQML, QString loginForQML);
     void sendSalaryToQML (int count);                                                               // Сигнал, для передачи данных в qml-интерфейс
-    void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub);                         // Сигнал для передачи информации о подчиненных
+    void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub, QString levelOfSubStr);                         // Сигнал для передачи информации о подчиненных
 
 public slots:
     void logIn(QString, QString);

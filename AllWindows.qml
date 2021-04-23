@@ -27,8 +27,8 @@ Window {
         }
         onSendSubordinatesInfoToQML: {
             listModel.append({idOfSubordinate: "Id: " + idSub, nameOfSubordinate: "Имя: " + nameSub, typeOfSubordinate: "Тип рабочего: " + typeOfWorkerSub,
-                                 firstDayDateOfSubordinate: "Дата первого рабочего дня: " + firstDayDateSub, baseRateOfSubordinate: "Дневная ставка: " + baseRateSub,
-                                 chiefIdOfSubordinate: "Id начальника: " + chiefIdSub});
+                                 firstDayDateOfSubordinate: "Дата первого рабочего дня: " + firstDayDateSub, baseRateOfSubordinate: "Дневная ставка: " + baseRateSub + " руб.",
+                                 chiefIdOfSubordinate: "Id начальника: " + chiefIdSub, levelOfSubordinate: "Уровень подчиненного: " + levelOfSubStr});
         }
     }
 
@@ -221,78 +221,129 @@ Window {
         visible: false
 
         ColumnLayout {
-            CommonButton {                    // Кнопка для возвращения в главное меню
-                id: showMainMenuFromSubordinatesPage
-                text: "<"
-                width: allWindows.width /16
-                height: allWindows.width / 16
-                color: "#00000000"
-                z: +1
-                onClicked: {
-                    listModel.clear()
-                    stackView.pop()
-                }
-            }
-
-
-        }
-
-
-
-        ListView {      // Список всех подчиненных всех уровней
-            id: listSubordinates
+            id: subordinatesColumn
             anchors.fill: parent
-            spacing: 4
-            ScrollBar.vertical: ScrollBar {}
+            spacing: 0
 
-            model: listModel
+            Rectangle {
+                color: "#1B242F"
+                z: +1
+                Layout.fillWidth: subordinatesColumn
+                height: 200
+                CommonButton {                    // Кнопка для возвращения в главное меню
+                    id: showMainMenuFromSubordinatesPage
+                    text: "<"
+                    width: allWindows.width /16
+                    height: allWindows.width / 16
+                    color: "#00000000"
 
-            delegate: Rectangle {
-                id: mainRec
-                height: 240
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins:  200
-                color: "#213141"
-                border.color: "black"
+                    onClicked: {
+                        listModel.clear()
+                        stackView.pop()
+                    }
+                }
 
-                TextForSubordinates {
-                    id: idText
-                    anchors.top:  mainRec.top
-                    text: model.idOfSubordinate
+                Item {
+                    width: parent.width
+                    height: 50
                 }
-                TextForSubordinates {
-                    id: textName
-                    anchors.top: idText.bottom
-                    text: model.nameOfSubordinate
+                Label {
+                    text: "Список подчиненных"
+                    color: "#aeb0b6"
+                    font.pointSize: 16
+                    font.bold: true
+                    z: 1
+                    anchors.centerIn: parent
                 }
-                TextForSubordinates {
-                    id: textType
-                    anchors.top: textName.bottom
-                    text: model.typeOfSubordinate
+
+
+                Item {
+                    Layout.fillWidth: subordinatesColumn
+                    height: 100
+
                 }
-                TextForSubordinates {
-                    id: textBeginData
-                    anchors.top: textType.bottom
-                    text: model.firstDayDateOfSubordinate
+            }
+
+            ListView {      // Список всех подчиненных всех уровней
+
+                id: listSubordinates
+                Layout.fillHeight: true
+                // Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                width: 500
+                spacing: 6
+                ScrollBar.vertical: ScrollBar {}
+                z: -1
+
+
+                Rectangle {
+                    anchors.fill: listSubordinates
+                    border.width: 1
+                    border.color: "black"
+                    color: "transparent"
                 }
-                TextForSubordinates {
-                    id: textRate
-                    anchors.top: textBeginData.bottom
-                    text: model.baseRateOfSubordinate
+                model: listModel
+                delegate: Rectangle {
+
+                    id: mainRec
+                    height: 200
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    // anchors.margins:  300
+                    color: "#213141"
+                    border.color: "black"
+
+                    TextForSubordinates {
+                        id: idText
+                        anchors.top:  mainRec.top
+                        text: model.idOfSubordinate
+                        anchors.topMargin: 20
+                    }
+                    TextForSubordinates {
+                        id: textName
+                        anchors.top: idText.bottom
+                        text: model.nameOfSubordinate
+                    }
+                    TextForSubordinates {
+                        id: textType
+                        anchors.top: textName.bottom
+                        text: model.typeOfSubordinate
+                    }
+                    TextForSubordinates {
+                        id: textBeginData
+                        anchors.top: textType.bottom
+                        text: model.firstDayDateOfSubordinate
+                    }
+                    TextForSubordinates {
+                        id: textRate
+                        anchors.top: textBeginData.bottom
+                        text: model.baseRateOfSubordinate
+                    }
+                    TextForSubordinates {
+                        id: chiefId
+                        anchors.top: textRate.bottom
+                        text: model.chiefIdOfSubordinate
+                    }
+                    TextForSubordinates {
+                        id: level
+                        anchors.top: chiefId.bottom
+                        text: model.levelOfSubordinate
+                    }
                 }
-                TextForSubordinates {
-                    id: chiefId
-                    anchors.top: textRate.bottom
-                    text: model.chiefIdOfSubordinate
-                }
+            }
+
+            Rectangle {
+                color: "#1B242F"
+                z: +1
+                Layout.fillWidth: subordinatesColumn
+                height: 100
+
             }
         }
 
-
-        ListModel {
-            id: listModel
-        }
+        ListModel { id: listModel }
     }
 }
 
