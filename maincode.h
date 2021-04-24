@@ -1,18 +1,15 @@
 #ifndef MAINCODE_H
 #define MAINCODE_H
 
-
 #include <QObject>
 #include <QDebug>
 #include <QQmlContext>      // Для соединения qml и cpp
-#include <QtSql>                    // Для работы с SQLite базой данных
+#include <QtSql>                   // Для работы с SQLite базой данных
 #include <QFileInfo>
 #include <iostream>
 #include <QString>
-// #define DEBUG
 
 using namespace std;
-
 
 
 // #include <time.h>
@@ -142,7 +139,7 @@ public:
 
 
 
-double CountSalary2(QString, QString, QString,  vector<shared_ptr<Worker>>);
+double CountSalary2(QString, QString, QString,  vector<shared_ptr<Worker>>, int);
 
 class MainCode : public QObject
 {
@@ -161,6 +158,7 @@ public:
     QString firstDayDateSub;
     QString baseRateSub;
     QString chiefIdSub;
+    QString loginSub;
     int levelOfSub = 0;
     QString levelOfSubStr;
 
