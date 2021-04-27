@@ -5,5 +5,7 @@
         <file>AllWindows.qml</file>
         <file>TemplatePage.qml</file>
         <file>TextForSubordinates.qml</file>
+        <file>TemplateLabelForAddWorkerPage.qml</file>
+        <file>TemplateTextField.qml</file>
     </qresource>
 </RCC>

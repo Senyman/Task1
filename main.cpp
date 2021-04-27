@@ -8,14 +8,13 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QGuiApplication app(argc, argv);
-    QQmlApplicationEngine engine;                               // Создание qml движка
-
+    QQmlApplicationEngine engine;
 
     MainCode maincode;
-    QQmlContext *context = engine.rootContext();                    // Для соединения main.qml и maincode.h/cpp
+    QQmlContext *context = engine.rootContext();                      // Для соединения main.qml и maincode.h/cpp
     context->setContextProperty("MainCode", & maincode);
 
-    const QUrl url(QStringLiteral("qrc:/main.qml"));    // В движок загружается корневой элемент main.qml
+    const QUrl url(QStringLiteral("qrc:/main.qml"));                    // В движок загружается корневой элемент main.qml
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, &app, [url](QObject *obj, const QUrl &objUrl) {  if (!obj && url == objUrl) QCoreApplication::exit(-1); }, Qt::QueuedConnection);
     engine.load(url);
     return app.exec();

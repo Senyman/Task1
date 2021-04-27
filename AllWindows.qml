@@ -6,8 +6,8 @@ import QtQuick.Layouts 1.12
 
 Window {
     id: allWindows
-    maximumWidth: 1200
-    minimumWidth: 1200
+    maximumWidth: 950
+    minimumWidth: 950
     maximumHeight: 800
     minimumHeight: 800
     title: qsTr("Приложение")
@@ -19,8 +19,13 @@ Window {
     Connections {                        // Для связи C++ и qml
         target: MainCode              // Связываем
         onSendSalaryToQML: {
-            salary.text = "Зарплата рабочего составляет: " + count + " рублей "  // Сюда задается текст
+            salary.text = resultSalary  // Сюда задается текст
         }
+
+        onSendSalaryOfAllWorkersToQML: {
+            salary.text = resultSalary
+        }
+
         onOpenMainMenu: {
             loginText.text = "Логин: " + loginForQML
             nameText.text = "Имя: " + nameForQML
@@ -29,6 +34,10 @@ Window {
             listModel.append({idOfSubordinate: "Id: " + idSub, nameOfSubordinate: "Имя: " + nameSub, typeOfSubordinate: "Тип рабочего: " + typeOfWorkerSub,
                                  firstDayDateOfSubordinate: "Дата первого рабочего дня: " + firstDayDateSub, baseRateOfSubordinate: "Дневная ставка: " + baseRateSub + " руб.",
                                  chiefIdOfSubordinate: "Id начальника: " + chiefIdSub, levelOfSubordinate: "Уровень подчиненного: " + levelOfSubStr});
+        }
+
+        onSendErrorMessageForName: {
+            nameErrorMes.text = errorMsg
         }
     }
 
@@ -74,7 +83,7 @@ Window {
                 text: "Добавить рабочего"
                 fontSize: 10
                 onClicked: {
-
+                        stackView.push(addWorkerPage);
                 }
            }
 
@@ -192,13 +201,13 @@ Window {
                     Layout.fillWidth: true
                 }
 
-                CommonButton {          // Moveback button
+                CommonButton {          // Расчет зарплаты всех сотрудников
                     id: calculateAllSalary
                     width: 100
                     height: 40
-                    text: "Calculate all"
+                    text: "Calculate salary for all"
                     onClicked: {
-
+                        MainCode.receiveDataFromQMLforCountSalaryForAll(beginDate.text, endDate.text)
                     }
                 }
 
@@ -345,6 +354,209 @@ Window {
 
         ListModel { id: listModel }
     }
+
+    TemplatePage {                            // Страница для добавления нового сотрудника
+        id: addWorkerPage
+        visible: false
+
+        CommonButton {                    // Кнопка для возвращения в главное меню
+            id: showMainMenuFromAddWorkerPage
+            text: "<"
+            width: allWindows.width /16
+            height: allWindows.width / 16
+            color: "#00000000"
+            onClicked: {
+                stackView.pop()
+            }
+        }
+        ColumnLayout {              // Слой с местом для ввода информации и кнопок
+            id: mainLinker
+            anchors.top: showMainMenuFromAddWorkerPage.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            // anchors.topMargin: allWindows.height / 6
+            width: allWindows.width
+            anchors.bottom: parent.bottom
+
+            ColumnLayout {                  // Поля для ввода
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft
+                Layout.leftMargin: 200
+
+                Label {
+
+                    //anchors.right: Layout.right
+                    text: "Введите данные"
+                    color: "#aeb0b6"
+                    font.pointSize: 16  // fontsize
+                }
+                Item {
+                    height: 15
+                }
+
+
+
+                TemplateTextField {
+                    id: nameForDB
+                    placeholderText: "Имя"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: nameErrorMes
+                    text: "Неправильно введено имя"
+                }
+
+
+
+                TemplateTextField {
+                    id: beginDateForDB
+                    placeholderText: "Дата устройства на работу"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: dateErrorMes
+                    text: "Дата должна быть в формате дд.мм.гггг"
+                }
+
+
+
+                TemplateTextField {
+                    id: baseRateForDB
+                    placeholderText: "Базовая ставка"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: rateErrorMes
+                    text: "Нельзя вводить буквы"
+                }
+
+
+                ComboBox {
+                    id:typeForDB2
+                    Layout.maximumHeight: 22
+                    Layout.minimumWidth: 250
+                    font.pointSize: 8
+                    model: ListModel {
+                        ListElement {
+                            text: "-"
+                        }
+                        ListElement {
+                            text: "Employee"
+                        }
+                        ListElement {
+                            text: "Manager"
+                        }
+                        ListElement {
+                            text: "Sales"
+                        }
+                    }
+                }
+
+                TemplateLabelForAddWorkerPage {
+                    id: typeErrorMes
+                    text: "Выберите тип"
+                }
+
+
+
+                TemplateTextField {
+                    id: loginForDB
+                    placeholderText: "Логин"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: loginErrorMes
+                    text: "Слишком длинный логин"
+                }
+
+
+
+                TemplateTextField {
+                    id: firstPasswordForDB
+                    placeholderText: "Пароль"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: firstPasswordErrorMes
+                    text: "Слишком длинный пароль"
+                }
+
+
+                TemplateTextField {
+                    id: secondPasswordForDB
+                    placeholderText: "Повторите пароль"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: secondPasswordErrorMes
+                    text: "Пароли не совпадают"
+                }
+
+
+
+                TemplateTextField {
+                    id: chiefForDB
+                    placeholderText: "Начальник"
+                }
+                TemplateLabelForAddWorkerPage {
+                    id: chiefErrorMes
+                    text: "Выберите начальника"
+                }
+
+
+                ComboBox {
+                    id:superuserForDB
+                    Layout.maximumHeight: 22
+                    Layout.minimumWidth: 250
+                    font.pointSize: 8
+                    model: ListModel {
+                        ListElement {
+                            text: "-"
+                        }
+                        ListElement {
+                            text: "Да"
+                        }
+                        ListElement {
+                            text: "Нет"
+                        }
+                    }
+                }
+
+                TemplateLabelForAddWorkerPage {
+                    id: superuserErrorMes
+                    text: "Выберите суперпользователя"
+                }
+
+            }
+
+            RowLayout{                  // Кнопки для расчета заработной платы за определенный период
+                id: layoutWithButtons
+                Layout.alignment: Qt.AlignBottom
+                Layout.bottomMargin: 20
+                height: 50
+
+                Item {                  // Spring for buttons
+                    Layout.fillWidth: true
+                }
+
+                CommonButton {          // Расчет зарплаты всех сотрудников
+                    id: clearFields
+                    width: 130
+                    height: 40
+                    text: "Очистить поля"
+                    onClicked: {
+                        // MainCode.receiveDataFromQMLforCountSalaryForAll(beginDate.text, endDate.text)
+                    }
+                }
+
+                CommonButton {          // Расчет зарплаты сотрудника
+                    id: addWorker
+                    width: 130
+                    height: 40
+                    text: "Добавить рабочего"
+                    Layout.rightMargin: 20
+                    onClicked: {
+                        MainCode.addWorker(nameForDB.text, beginDateForDB.text, baseRateForDB.text, typeForDB.text,
+                                           loginForDB.text, firstPasswordForDB.text, secondPasswordForDB.text, chiefForDB.text, superuserForDB.text)
+                    }
+                }
+             }
+        }   // Column
+    }
+
 }
 
 

@@ -6,16 +6,10 @@
 #include <QQmlContext>      // Для соединения qml и cpp
 #include <QtSql>                   // Для работы с SQLite базой данных
 #include <QFileInfo>
-#include <iostream>
 #include <QString>
-
+#include <iostream>
+#include <cmath>
 using namespace std;
-
-// #include <time.h>
-// #include <iomanip>
-// #include <conio.h>
-//#include <QQmlApplicationEngine>
-// #include <windows.h>
 
 
 class Worker
@@ -26,59 +20,62 @@ public:
     QString typeOfWorker;
     QString login;
     int id;
-    int baseRate = 1000;
+    int baseRate;
     int chiefId;
-    double salary = 0;
+    double salary;
     int workDays = 0;
+    int superuser;
 };
 
 class Employee : public Worker {
 public:
-    Employee(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+    Employee(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId, int superuser) {
         this-> id = id;
         this->name = name;
         this->firstDayDate = firstDayDate;
         this->baseRate = baseRate;
         this->typeOfWorker = typeOfWorker;
         this->login = login;
-        this->chiefId =chiefId;
+        this->chiefId = chiefId;
+        this->superuser = superuser;
     }
 };
 
 class Manager : public Worker
 {
 public:
-    Manager(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+    Manager(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId, int superuser) {
         this-> id = id;
         this->name = name;
         this->firstDayDate = firstDayDate;
         this->baseRate = baseRate;
         this->typeOfWorker = typeOfWorker;
         this->login = login;
-        this->chiefId =chiefId;
+        this->chiefId = chiefId;
+        this->superuser = superuser;
     }
 };
 
-class Sales :public Worker
+class Sales : public Worker
 {
 public:
-    Sales(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId) {
+    Sales(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId, int superuser) {
         this-> id = id;
         this->name = name;
         this->firstDayDate = firstDayDate;
         this->baseRate = baseRate;
         this->typeOfWorker = typeOfWorker;
         this->login = login;
-        this->chiefId =chiefId;
+        this->chiefId = chiefId;
+        this->superuser = superuser;
     }
-    int numberOfSubordinatesFirst;
-    int numberOfSubordinatesSecond;
 };
 
-QString CountSalary(QString, QString, QString,  vector<shared_ptr<Worker>>, int);
 
-class MainCode : public QObject
-{
+QString CountSalary(QString, QString, QString,  vector<shared_ptr<Worker>>);
+QString CountSalaryForAll();
+
+class MainCode : public QObject {
     Q_OBJECT
 public:
 
@@ -87,6 +84,7 @@ public:
     bool foundCoincidence;
     QString loginForQML;
     QString nameForQML;
+    QString superuserSub;
     QString idSub;
     QString nameSub;
     QString typeOfWorkerSub;
@@ -98,16 +96,37 @@ public:
     vector<shared_ptr<Worker>> createWorkers();
     explicit MainCode(QObject *parent = nullptr);
 
+
+    // Переменные для addWorker
+    QString errorMsg;
+
 signals:
-    void sendSalaryToQML (int count);                                                               // Сигнал, для передачи данных в qml-интерфейс
+    void sendSalaryToQML (QString resultSalary);
+    void sendSalaryOfAllWorkersToQML (QString resultSalary);
     void sendErrorMessage (QString errorMesage);
     void openMainMenu(QString nameForQML, QString loginForQML);
     void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub, QString levelOfSubStr);                         // Сигнал для передачи информации о подчиненных
+
+    // Сигналы для addWorker
+    void sendErrorMessageForName(QString errorMsg);
+    void sendErrorMessageForBeginDate(QString errorMsg);
+    void sendErrorMessageForType(QString errorMsg);
+    void sendErrorMessageForBaseRate(QString errorMsg);
+    void sendErrorMessageForLogin(QString errorMsg);
+    void sendErrorMessageForFirstPassword(QString errorMsg);
+    void sendErrorMessageForSecondPassword(QString errorMsg);
+    void sendErrorMessageForChief(QString errorMsg);
+    void sendErrorMessageForSuperuser(QString errorMsg);
+    void sendCommonErrorMessage(QString errorMsg);
+
+
 
 public slots:
     void findSubordinates();
     void logIn(QString, QString);
     void receiveDataFromQMLforCountSalary(QString, QString, QString);
+    void receiveDataFromQMLforCountSalaryForAll(QString, QString );
+    void addWorker(QString, QString, QString, QString, QString, QString, QString, QString, QString);
 };
 
-#endif // MAINCODE_H
+#endif
