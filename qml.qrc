@@ -7,5 +7,9 @@
         <file>TextForSubordinates.qml</file>
         <file>TemplateLabelForAddWorkerPage.qml</file>
         <file>TemplateTextField.qml</file>
+        <file>MainMenuPage.qml</file>
+        <file>CalculateSalaryPage.qml</file>
+        <file>SubordinatesPage.qml</file>
+        <file>AddWorkerPage.qml</file>
     </qresource>
 </RCC>

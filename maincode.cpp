@@ -36,10 +36,10 @@ void MainCode::logIn(QString login, QString password) {                         
     QSqlDatabase::removeDatabase("qt_sql_default_connection");
 }
 
-void MainCode::receiveDataFromQMLforCountSalary(QString beginDate, QString endDate, QString name)
+void MainCode::receiveDataFromQMLforCountSalary(QString beginDate, QString endDate, QString id)
 {
     vector<shared_ptr<Worker>> workers = createWorkers();
-    emit sendSalaryToQML(CountSalary(beginDate, endDate, name, workers));
+    emit sendSalaryToQML(CountSalary(beginDate, endDate, id, workers));
 }
 
 void MainCode::receiveDataFromQMLforCountSalaryForAll(QString beginDate, QString endDate)
@@ -60,10 +60,10 @@ void MainCode::receiveDataFromQMLforCountSalaryForAll(QString beginDate, QString
                 haveAccess = true;
                 for(auto &a: workers) {
                     foundPoint = false;
-                    currentSalary = CountSalary(beginDate, endDate, a->name, workers);
+                    currentSalary = CountSalary(beginDate, endDate, QString::number(a->id), workers);
                     forNumericOfSalaryBeforePoint = 0;
 
-                    // Превращаем строку  currentSalary в число типа double
+
                     for(int i =0; i < currentSalary.size(); i++) {
 
                         if( !foundPoint && currentSalary[i].isDigit()) {
@@ -91,11 +91,31 @@ void MainCode::receiveDataFromQMLforCountSalaryForAll(QString beginDate, QString
             }
         }
     }
-    if(haveAccess) emit sendSalaryOfAllWorkersToQML ("Зарплата всех работников равна: " + QString::number(currentSalarydouble));
+    currentSalarydouble *=10;
+    currentSalarydouble = floor(currentSalarydouble) /10;
+
+    if(haveAccess) emit sendSalaryOfAllWorkersToQML ("Зарплата всех работников равна: " + QString::number(currentSalarydouble, 'g', 8) + "руб.");
     else emit sendSalaryOfAllWorkersToQML ("У вас нет прав доступа");
 }
 
-void MainCode::findSubordinates() { createWorkers(); }
+void MainCode::findWorkersAndSubordinates() {
+
+    bool badEnter = true;
+    vector<shared_ptr<Worker>> workers = createWorkers();
+    for(auto &a:workers) {
+        if(a->login == loginForQML && a->superuser == 1) {
+            emit openAddWorkerPage();
+            badEnter = false;
+            createWorkers();
+        }
+    }
+    if(badEnter) emit doesNotHavePermissionToOpenPage();
+}
+
+void MainCode::findWorkersAndSubordinatesForSubPage()
+{
+    createWorkers();
+}
 
 vector<shared_ptr<Worker>> MainCode::createWorkers() {
 
@@ -112,19 +132,19 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
     QString typeOfWorkerForArr;
     QString loginForArr;
 
-    vector<int> chiefsid;                                       // Массив для расчета уровней подчиненных
-    vector<shared_ptr<Worker>> workers;          // Массив со всеми работниками из БД
-    vector<shared_ptr<Worker>> UserAndSubordinateWorkers; // Массив с залогинившимся работником и всеми его подчиненными из БД
+    vector<int> chiefsid;                                                                 // Массив для расчета уровней подчиненных
+    vector<shared_ptr<Worker>> workers;                                    // Массив со всеми работниками из БД
+    vector<shared_ptr<Worker>> UserAndSubordinateWorkers;  // Массив с залогинившимся работником и всеми его подчиненными из БД
 
     chiefsid.push_back(idForQML);
 
-
-   {    // Заносим в массив workers всех людей с базы данных
-       QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");                              // Создаем объект для работы с базой данных
-       workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");    // Указываю путь к базе данных
+   {
+        // Заносим в массив workers всех людей с базы данных
+       QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
+       workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
        if(!workersDB.open()) qDebug() << "Failed to open database";
        else qDebug() << "DataBase is connected";
-       QSqlQuery qry;                                                                                                                    // Объект для запроса информации из БД
+       QSqlQuery qry;
 
        if(qry.exec("SELECT * FROM WorkersTable ")) {
            while(qry.next()) {
@@ -141,14 +161,15 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
                    if(typeOfWorkerForArr == "Employee") workers.push_back(make_shared<Employee>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr, superuserForArr));
                    else if (typeOfWorkerForArr == "Sales") workers.push_back(make_shared<Sales>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr, superuserForArr));
                    else if(typeOfWorkerForArr == "Manager") workers.push_back(make_shared<Manager>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr, superuserForArr));
+
+                   qDebug() << qry.value(0).toString();
+                   emit sendWorkersInfoToQML(qry.value(0).toString() + " " + nameForArr);
                }
            }
            workersDB.close();
        }
     }
     QSqlDatabase::removeDatabase("qt_sql_default_connection");
-
-
 
     // Добавляем залогинившегося работника
     for(unsigned long long j = 0; j < workers.size(); j++) {
@@ -162,14 +183,13 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
     // Добавляем подчиненных залогинившегося работника и рассчитываем уровень подчиненнго для каждого работника
     while(true) {
         chiefsCounter = 0;
-
         sizeArr = chiefsid.size();
 
-        for(unsigned long long i = 0; i <chiefsid.size()-chiefsCounter; i++ ) { // Для каждого эл-та в chiefsid arr ( вначале там только id одного человека, под  логином и паролем которого я зашел)
-            for (unsigned long long j = 0; j < workers.size(); j++) {                       // Для каждого работника, которого я добавил из базы данных
-                if(chiefsid[i] == workers[j]->chiefId) {                                            // Если id начальника ( 1-й коннор) совпадает с полем Chief у подчиненного
+        for(unsigned long long i = 0; i <chiefsid.size()-chiefsCounter; i++ ) {     // Для каждого эл-та в chiefsid arr ( вначале там только id одного человека, под  логином и паролем которого я зашел)
+            for (unsigned long long j = 0; j < workers.size(); j++) {                      // Для каждого работника, которого я добавил из базы данных
+                if(chiefsid[i] == workers[j]->chiefId) {                                            // Если id начальника совпадает с полем Chief у подчиненного
 
-                    idSub = QString::number(workers[j]->id);                                    // Записываем его данные, что бы отобразить далее на экране
+                    idSub = QString::number(workers[j]->id);                                 // Записываем его данные, что бы отобразить далее на экране
                     nameSub = workers[j]->name;
                     typeOfWorkerSub = workers[j]->typeOfWorker;
                     firstDayDateSub =  workers[j]->firstDayDate;
@@ -183,7 +203,7 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
                         level ++;
                         }
                     }
-                    chiefsid.push_back(workers[j]->id);                                             // То Добавляем его id, делаем его тоже шефом, только он теперь ниже по уровню
+                    chiefsid.push_back(workers[j]->id);                                             // Добавляем id подчиненного, делаем его тоже шефом, только он теперь ниже по уровню
                     emit sendSubordinatesInfoToQML(idSub, nameSub, typeOfWorkerSub, firstDayDateSub, baseRateSub, chiefIdSub, QString::number(level));               // Отправляем данные в QML для отображения в ListModel
 
                     if(typeOfWorkerForArr == "Employee") UserAndSubordinateWorkers.push_back(make_shared<Employee>( workers[j]->id, nameSub, firstDayDateSub, workers[j]->baseRate, typeOfWorkerSub, loginSub, workers[j]->chiefId, workers[j]->superuser));
@@ -211,13 +231,12 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
     return UserAndSubordinateWorkers;
 }
 
-QString CountSalary(QString beginDate, QString endDate, QString name, vector<shared_ptr<Worker>> workers)
-{
+QString CountSalary(QString beginDate, QString endDate, QString idFromQML, vector<shared_ptr<Worker>> workers) {
     double salary = 0;
     bool badenter = true;
     int* mHolidays;
     for( auto &a: workers) {
-       if(name == a->name) {
+       if((idFromQML).toInt()  == a->id) {
 
            badenter = false;
 
@@ -226,7 +245,6 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
            int firstDayDay, firstDayMonth, firstDayYear;
            int mDays[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
            int mainChiefId = a->id;
-
 
 
            // Проверяем введенные даты начальной и конечной и перевод их в int
@@ -239,12 +257,17 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                monthBegin = (beginDate[3].unicode()-48) * 10 + (beginDate[4].unicode()-48);
                yearBegin = (beginDate[6].unicode()-48) * 1000 + (beginDate[7].unicode()-48) * 100 + (beginDate[8].unicode()-48) * 10 + (beginDate[9].unicode()-48);
 
-               if (yearBegin < 1970 || yearBegin >= 2038 || monthBegin < 1 || monthBegin >12 || dayBegin < 1 || dayBegin >31 || dayBegin > mDays[monthBegin - 1])
-               {
-                   return "Вы ввели неправильную дату";
+               if (yearBegin < 1970 || yearBegin >= 2038 || monthBegin < 1 || monthBegin >12 || dayBegin < 1 || dayBegin >31 ) return "Вы ввели неправильную дату";
+               if(yearBegin % 400 == 0 || (yearBegin % 4 == 0 && yearBegin % 100 != 0)) {
+                   if(monthBegin == 2) {
+                       if(dayBegin > 29) return "Вы ввели неправильную дату";
+                   }
+                   else if (dayBegin > mDays[monthBegin - 1]) return "Вы ввели неправильную дату";
                }
-               else qDebug() << "Вы ввели дату: " << dayBegin << "." << monthBegin << "." << yearBegin;
+               else if(dayBegin > mDays[monthBegin - 1]) return "Вы ввели неправильную дату";
+               qDebug() << "Вы ввели дату: " << dayBegin << "." << monthBegin << "." << yearBegin;
            }
+
 
            if (endDate.length() != 10 || endDate[2] != '.' || endDate[5] != '.' || endDate[1] == 0 || ! endDate[0].isDigit() || ! endDate[1].isDigit() || ! endDate[3].isDigit() || ! endDate[4].isDigit()
                || ! endDate[6].isDigit() || ! endDate[7].isDigit() || ! endDate[8].isDigit() || ! endDate[9].isDigit()) {
@@ -254,21 +277,29 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                dayEnd = (  endDate[0].unicode() - 48) * 10 +   endDate[1].unicode() - 48;
                monthEnd = ( endDate[3].unicode() - 48) * 10 + ( endDate[4].unicode() - 48);
                yearEnd = (  endDate[6].unicode() - 48) * 1000 + (  endDate[7].unicode() - 48) * 100 + (  endDate[8].unicode() - 48) * 10 + (  endDate[9].unicode() - 48);
-               if (yearEnd < 1970 || yearEnd >= 2038 || monthEnd < 1 || monthEnd >12 || dayEnd < 1 || dayEnd >31 || dayEnd > mDays[monthEnd - 1]) {
-                   return "Вы ввели неправильную дату";
-               }
-               else {
-                   if (yearEnd > yearBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
-                   else if (yearEnd == yearBegin) {
-                       if (monthEnd > monthBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
-                       else if (monthEnd == monthBegin) {
-                           if (dayEnd >= dayBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
-                           else return "Вы ввели неправильную дату";
-                       }
+
+
+               if (yearEnd < 1970 || yearEnd >= 2038 || monthEnd < 1 || monthEnd >12 || dayEnd < 1 || dayEnd >31 ) return "Вы ввели неправильную дату";
+               if(yearEnd % 400 == 0 || (yearEnd % 4 == 0 && yearEnd % 100 != 0)) {
+                   if(monthEnd == 2) {
+                       if(dayEnd > 29) return "Вы ввели неправильную дату";
                    }
-                   else return "Вы ввели неправильную дату";
+                   else if (dayEnd > mDays[monthEnd - 1]) return "Вы ввели неправильную дату";
+               }
+               else if(dayEnd > mDays[monthEnd - 1]) return "Вы ввели неправильную дату";
+               qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
+           }
+
+           if (yearEnd > yearBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
+           else if (yearEnd == yearBegin) {
+               if (monthEnd > monthBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
+               else if (monthEnd == monthBegin) {
+                   if (dayEnd >= dayBegin) qDebug() << "Вы ввели дату: " << dayEnd << "." << monthEnd << "." << yearEnd;
+                   else return "Начальная дата позже конечной";
                }
            }
+           else return "Вы ввели неправильную дату";
+
 
            // Переводим дату первого рабочего дня в int
            firstDayDay = (  a->firstDayDate[0].unicode() - 48) * 10 +   a->firstDayDate[1].unicode() - 48;
@@ -292,7 +323,7 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                else amountOfDaysBeforeBeginningOfPeriod += 365;
            }
            amountOfDaysBeforeBeginningOfPeriod += dayBegin;
-           qDebug() << "Количество дней с начала 1970 года да начала периода: " << amountOfDaysBeforeBeginningOfPeriod;
+           qDebug() << "Количество дней с начала 1970 года до начала периода: " << amountOfDaysBeforeBeginningOfPeriod;
 
 
 
@@ -332,7 +363,14 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
            }
            amountOfDaysBeforeFirstWorkingDay += firstDayDay;
            qDebug() << "Количество дней с начала 1970 года до даты начала работы на работе: " << amountOfDaysBeforeFirstWorkingDay;
-
+           // Проверяем, раньше ли дата начала периода, для которого необходимо рассчитать количество рабоачих дней, чем дата, когда сотрудник устроился на работу
+           if(amountOfDaysBeforeBeginningOfPeriod < amountOfDaysBeforeFirstWorkingDay) {
+               amountOfDaysBeforeBeginningOfPeriod = amountOfDaysBeforeFirstWorkingDay;
+               qDebug() << "В периоде есть даты, в которые сотрудник еще не работал";
+           }
+           if(amountOfDaysBeforeEndingOfPeriod < amountOfDaysBeforeFirstWorkingDay) {
+               return "В рассчетный период сотрудник еще не устроился на работу";
+           }
 
 
            // Считаем количество дней с 1970 до года, в котором человек устроился на работу
@@ -378,7 +416,7 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                        mHolidays[i + 1] = amountOfDaysForCurrentYear + 122;		// 1 мая
                        mHolidays[i + 2] = amountOfDaysForCurrentYear + 130;		// 9 мая
                        mHolidays[i + 3] = amountOfDaysForCurrentYear + 164;		// 12 июня
-                       mHolidays[i + 4] = amountOfDaysForCurrentYear + 309;		// 4 ноября
+                       mHolidays[i + 4] = amountOfDaysForCurrentYear + 309;	// 4 ноября
                    }
                }
                else {
@@ -387,7 +425,7 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                        mHolidays[i + 1] = amountOfDaysForCurrentYear + 121;		// 1 мая
                        mHolidays[i + 2] = amountOfDaysForCurrentYear + 129;		// 9 мая
                        mHolidays[i + 3] = amountOfDaysForCurrentYear + 163;		// 12 июня
-                       mHolidays[i + 4] = amountOfDaysForCurrentYear + 308;		// 4 ноября
+                       mHolidays[i + 4] = amountOfDaysForCurrentYear + 308;	// 4 ноября
                    }
                }
                if (yearCurrent % 400 == 0 || (yearCurrent % 4 == 0 && yearCurrent % 100 != 0)) amountOfDaysForCurrentYear += 366;
@@ -438,7 +476,6 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
            int currentYear = firstDayYear;
            amountOfDaysForCurrentYear = 0;
            while(currentYear < yearEnd+1) {
-
                if (currentYear % 400 == 0 || (currentYear % 4 == 0 && currentYear % 100 != 0)) {
                    if(currentYear>=firstDayYear) LastFebraryDays.push_back(amountOfDaysForCurrentYear + 60);
                     amountOfDaysForCurrentYear += 366;
@@ -465,7 +502,7 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
 
            for(int i = amountOfDaysBeforeBeginningOfPeriod; i < amountOfDaysBeforeEndingOfPeriod + 1; i++) {
                 dayIsHoliday = false;
-                for(int j = 0; j < HolidaysCount; j++) {    // Праздничный ли день?
+                for(int j = 0; j < HolidaysCount; j++) {               // Праздничный ли день?
                     if(i == mHolidays[j]) dayIsHoliday = true;
                     if(currentDayOfWeek == 5 || currentDayOfWeek ==6) dayIsHoliday = true;  // Выходной ли день?
                 }
@@ -509,7 +546,6 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                         if(i>=amountOfDaysForStartToWorkPlusYears) numberOfWorkedYears++;
                         iterator++;
                    }
-                    // qDebug() << numberOfWorkedYears;
                     if(a->typeOfWorker == "Employee") {
                         if(numberOfWorkedYears > 10) numberOfWorkedYears =10;
                         result = a->baseRate + 0.03*numberOfWorkedYears*a->baseRate;
@@ -541,11 +577,10 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                                     else amountOfDaysBeforeFirstWorkingDaySub += 365;
                                 }
                                 amountOfDaysBeforeFirstWorkingDaySub += firstDayDaySub;
-
                                 if(i>=amountOfDaysBeforeFirstWorkingDaySub) quantityOfSubodinates++;
                            }
                        }
-                        result = a->baseRate + 0.05*numberOfWorkedYears*a->baseRate+0.005*a->baseRate*quantityOfSubodinates; // Добавить заплату за всех подчиненных первого уровня!!!
+                        result = a->baseRate + 0.05*numberOfWorkedYears*a->baseRate+0.005*a->baseRate*quantityOfSubodinates;
                     }
                     else if(a->typeOfWorker == "Sales") {
 
@@ -556,14 +591,13 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                         unsigned long long subChiefIdsMainSize2 =0;
 
 
-                        // Считаем количество подчиненных всех уровней
+                       // Считаем количество подчиненных всех уровней
                        quantityOfSubodinates = 0;
                        while (true) {
                             quantityOfSubForDelete = 0;
                             for(unsigned long long a = 0; a < subChiefIdsMainSize; a++) {
                                 for(auto &b : workers) {
                                     if(subChiefIds[a] == b->chiefId) {
-
                                         int firstDayDaySub = (  b->firstDayDate[0].unicode() - 48) * 10 +   b->firstDayDate[1].unicode() - 48;
                                         int firstDayMonthSub = ( b->firstDayDate[3].unicode() - 48) * 10 + ( b->firstDayDate[4].unicode() - 48);
                                         int firstDayYearSub = (  b->firstDayDate[6].unicode() - 48) * 1000 + (  b->firstDayDate[7].unicode() - 48) * 100 + (  b->firstDayDate[8].unicode() - 48) * 10 + (  b->firstDayDate[9].unicode() - 48);
@@ -597,9 +631,7 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
                                 subChiefIds.erase(iter);
                                 iter = subChiefIds.begin();
                             }
-                            if(subChiefIdsMainSize == 0) {
-                                break;
-                            }
+                            if(subChiefIdsMainSize == 0) break;
                             subChiefIdsMainSize = subChiefIds.size();
                        }
 
@@ -611,117 +643,199 @@ QString CountSalary(QString beginDate, QString endDate, QString name, vector<sha
             }
         }
     }
-    delete[] mHolidays;
-    if(badenter) return "Такого имени в базе данных нет";
-    return "Зарплата рабочего составляет " + QString::number(salary) + " рублей";
+    salary *=10;
+    salary = floor(salary) /10;
+
+    if(badenter) return "Такого id в базе данных нет";
+    else delete[] mHolidays;
+    return "Зарплата сотрудника составляет " + QString::number(salary, 'g', 8) + " руб.";
 }
 
-void MainCode::addWorker(QString name, QString FirstDayDate, QString rate, QString type, QString login, QString firstPassword, QString secondPassword, QString chiefId, QString superuser)
-{
+void MainCode::addWorker(QString name, QString firstDayDate, QString rate, QString type, QString login, QString firstPassword, QString secondPassword, QString chiefId, QString superuser) {
+    vector<shared_ptr<Worker>> workers = createWorkers();
     bool badEnter = false;
     int mDays[12] = { 31,28,31,30,31,30,31,31,30,31,30,31};
     while(true) {
 
+    // Проверка имени
     if(name.length() > 20) {
         badEnter = true;
         emit sendErrorMessageForName("Длинна имени не должна привышать 20 символов");
         break;
     }
-     if (FirstDayDate.length() != 10 || FirstDayDate[2] != '.' || FirstDayDate[5] != '.' || FirstDayDate[1] == 0 || !FirstDayDate[0].isDigit() || !FirstDayDate[1].isDigit() || !FirstDayDate[3].isDigit() || !FirstDayDate[4].isDigit()
-         || !FirstDayDate[6].isDigit() || !FirstDayDate[7].isDigit() || !FirstDayDate[8].isDigit() || !FirstDayDate[9].isDigit()) {
-        emit sendErrorMessageForBeginDate("Неправильно введена дата первого рабочего дня");
-         badEnter = true;
-         break;
-     }
-
-     int dayBegin = (FirstDayDate[0].unicode() - 48) * 10 + FirstDayDate[1].unicode()-48;
-     int monthBegin = (FirstDayDate[3].unicode()-48) * 10 + (FirstDayDate[4].unicode()-48);
-     int yearBegin = (FirstDayDate[6].unicode()-48) * 1000 + (FirstDayDate[7].unicode()-48) * 100 + (FirstDayDate[8].unicode()-48) * 10 + (FirstDayDate[9].unicode()-48);
-
-     if ((yearBegin % 400 == 0 || (yearBegin % 4 == 0 && yearBegin % 100 != 0))&& monthBegin == 1 && dayBegin > 29) {
-         badEnter = true;
-         emit sendErrorMessageForBeginDate("Последний день февраля в этом году: 29");
-         break;
-     }
-     else if (yearBegin < 1970 || yearBegin >= 2038 || monthBegin < 1 || monthBegin >12 || dayBegin < 1 || dayBegin >31 || dayBegin > mDays[monthBegin - 1]) {
+    if(name.length() < 1) {
         badEnter = true;
-        emit sendErrorMessageForBeginDate("Неправильно введена дата первого рабочего дня");
+        emit sendErrorMessageForName("Ошибка ввода");
         break;
     }
-    else qDebug() << "Вы ввели дату: " << dayBegin << "." << monthBegin << "." << yearBegin;
+    for(int i = 0; i < name.length(); i ++) {
+        if(name[i].isDigit()) {
+            badEnter = true;
+            emit sendErrorMessageForName("Имя не должно содержать цифры");
+            break;
+        }
+    }
 
+    // Проверка даты первого рабочего дня
+    if (firstDayDate.length() != 10 || firstDayDate[2] != '.' || firstDayDate[5] != '.' || firstDayDate[1] == 0 || !firstDayDate[0].isDigit() || !firstDayDate[1].isDigit() || !firstDayDate[3].isDigit() || !firstDayDate[4].isDigit()
+        || !firstDayDate[6].isDigit() || !firstDayDate[7].isDigit() || !firstDayDate[8].isDigit() || !firstDayDate[9].isDigit()) {
+        emit sendErrorMessageForBeginDate("Ошибка ввода");
+        badEnter = true;
+        break;
+    }
 
-     if(rate.length() > 20) {
-         emit sendErrorMessageForBaseRate("Неверный ввод");
-         badEnter = true;
-     }
-     else {
-         for(int i = 0; i < rate.length(); i++) {
-             if(!rate[i].isDigit()) {
-                 emit sendErrorMessageForBaseRate( "Должны быть только цифры");
-                 badEnter = true;
-                 break;
-             }
-         }
-     }
+    int dayBegin = (firstDayDate[0].unicode() - 48) * 10 + firstDayDate[1].unicode()-48;
+    int monthBegin = (firstDayDate[3].unicode()-48) * 10 + (firstDayDate[4].unicode()-48);
+    int yearBegin = (firstDayDate[6].unicode()-48) * 1000 + (firstDayDate[7].unicode()-48) * 100 + (firstDayDate[8].unicode()-48) * 10 + (firstDayDate[9].unicode()-48);
 
-     if(type != "Employee" || type != "Manager" || type != "Salary") {
-         qDebug() << "Выберите тип работника";
-         badEnter = true;
-     }
+    if (yearBegin < 1970 || yearBegin >= 2038 || monthBegin < 1 || monthBegin >12 || dayBegin < 1 || dayBegin >31) {
+       badEnter = true;
+       emit sendErrorMessageForBeginDate("Ошибка ввода");
+       break;
+    }
 
+    if (yearBegin % 400 == 0 || (yearBegin % 4 == 0 && yearBegin % 100 != 0)) {
+        if(monthBegin == 2 ) {
+            if(dayBegin > 29) {
+                badEnter = true;
+                emit sendErrorMessageForBeginDate("Последний день февраля в этом году: 29");
+                break;
+            }
+        }
+        else if(dayBegin > mDays[monthBegin - 1]) {
+            emit sendErrorMessageForBeginDate("Ошибка ввода");
+            badEnter = true;
+            break;
+        }
+    }
+    else if(dayBegin > mDays[monthBegin - 1]) {
+        emit sendErrorMessageForBeginDate("Ошибка ввода");
+        badEnter = true;
+        break;
+    }
+    qDebug() << "Вы ввели дату: " << dayBegin << "." << monthBegin << "." << yearBegin;
+
+    // Проверка базовой ставки
+    if(rate.length() > 20) {
+        emit sendErrorMessageForBaseRate("Слишком длинное число");
+        badEnter = true;
+        break;
+    }
+    else {
+        for(int i = 0; i < rate.length(); i++) {
+            if(!rate[i].isDigit()) {
+                emit sendErrorMessageForBaseRate( "Базовая ставка должна быть целым числом");
+                badEnter = true;
+                break;
+            }
+        }
+    }
+    if(rate.length() < 1) {
+        emit sendErrorMessageForBaseRate("Ошибка ввода");
+        badEnter = true;
+        break;
+    }
+
+     // Проверка типа работника
+    if(type != "Employee" && type != "Manager" && type != "Sales") {
+        badEnter = true;
+        emit sendErrorMessageForType("Выберите тип работника");
+        break;
+    }
+
+     // Проверка логина и пароля
      if(login.length() > 20) {
          badEnter  = true;
-         emit sendErrorMessageForLogin("Логин должен быть менее 20 символов");
+         emit sendErrorMessageForLogin("Длина логина должна быть менее 20 символов");
          break;
      }
-
+     if(login.length() < 1) {
+         badEnter  = true;
+         emit sendErrorMessageForLogin("Ошибка ввода");
+         break;
+     }
+     for(auto &a: workers) {
+         if(a->login == login) {
+             badEnter  = true;
+             emit sendErrorMessageForLogin("Такой логин уже существует");
+             break;
+         }
+     }
      if(firstPassword.length() > 20) {
          badEnter  = true;
-         emit sendErrorMessageForFirstPassword("Пароль должен быть менее 20 символов");
+         emit sendErrorMessageForFirstPassword("Длина пароля должна быть менее 20 символов");
          break;
      }
-
+     if(badEnter) break;
+     if(firstPassword.length() < 1) {
+         badEnter  = true;
+         emit sendErrorMessageForFirstPassword("Ошибка ввода");
+         break;
+     }
      if(secondPassword != firstPassword) {
          badEnter  = true;
-         emit sendErrorMessageForFirstPassword("Пароли не совпадают");
+         emit sendErrorMessageForSecondPassword("Пароли не совпадают");
          break;
      }
 
+     // Проверка id начальника
+     QString newWorkerId = "";
+     for(int i = 0; i < chiefId.size(); i++) {
+         if(chiefId[i].isDigit()) {
+             newWorkerId += chiefId[i];
+         }
+     }
+     if(newWorkerId == "") {
+         badEnter  = true;
+         emit sendErrorMessageForChief("Выберите начальника");
+         break;
+     }
 
-     {
+     if(superuser == "-") {
+         badEnter  = true;
+         emit sendErrorMessageForSuperuser("Выберите, является ли суперпользователем");
+         break;
+     }
+     if(superuser == "Да") superuser = "1";
+     if(superuser == "Нет") superuser = "0";
+    qDebug() << superuser;
+
+    {
          QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
          workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
          if(!workersDB.open()) qDebug() << "Failed to open database";
          else qDebug() << "DataBase is connected";
          QSqlQuery qry;
 
+         qry.prepare("insert into WorkersTable (Name, FirstDayDate, BaseSalary, TypeOfWorker, Login, Password, Chief, Superuser) values ('"+name+"','"+firstDayDate+"' ,'"+rate+"' , '"+type+"','"+login+"' , '"+firstPassword+"','"+newWorkerId+"' , '"+superuser+"') ");
 
-         qry.prepare("insert int WorkersTable (Id, Name, FirstDayDate, BaseSalary, TypeOfWorker, Login, Password, Chief, Superuser) values (name, date, rate, type, login, firstPassword, secondPassword, chiefId, superuser) ");
-
-         if(qry.exec("SELECT * FROM WorkersTable ")) {
-             while(qry.next()) {
-                 {
-                 }
-             }
-             workersDB.close();
+         if(qry.exec()) {
+            qDebug() << "Информация о сотруднике добавлена в базу данных";
+            emit sendCommonErrorMessage("Информация о сотруднике добавлена в базу данных");
+            workersDB.close();
          }
-      }
-      QSqlDatabase::removeDatabase("qt_sql_default_connection");
+    }
+    QSqlDatabase::removeDatabase("qt_sql_default_connection");
+    break;
 
     }
-    if(badEnter == true) {
-        emit sendCommonErrorMessage("Неправильный ввод данных, повторите попытку");
-    }
-    else {
-        emit sendCommonErrorMessage("Работник был добавлен в базу данных");
-    }
- }
+    if(badEnter) emit sendCommonErrorMessage("Неправильный ввод данных, повторите попытку");
+}
 
+void MainCode::fillChiefListModel() {
+    {
+        QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
+        workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+        if(!workersDB.open()) qDebug() << "Failed to open database";
+        else qDebug() << "DataBase is connected";
+        QSqlQuery qry;
 
-
-
-
-
-
-
+        if(qry.exec("SELECT * FROM WorkersTable ")) {
+            while(qry.next()) {
+                emit sendWorkersInfoToQML(qry.value(0).toString() + " " + qry.value(1).toString());
+            }
+            workersDB.close();
+        }
+     }
+     QSqlDatabase::removeDatabase("qt_sql_default_connection");
+}

@@ -3,17 +3,17 @@
 
 #include <QObject>
 #include <QDebug>
-#include <QQmlContext>      // Для соединения qml и cpp
-#include <QtSql>                   // Для работы с SQLite базой данных
+#include <QQmlContext>
+#include <QtSql>
 #include <QFileInfo>
 #include <QString>
 #include <iostream>
 #include <cmath>
+#include <iomanip>
 using namespace std;
 
 
-class Worker
-{
+class Worker {
 public:
     QString name;
     QString firstDayDate;
@@ -41,8 +41,7 @@ public:
     }
 };
 
-class Manager : public Worker
-{
+class Manager : public Worker {
 public:
     Manager(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId, int superuser) {
         this-> id = id;
@@ -56,8 +55,7 @@ public:
     }
 };
 
-class Sales : public Worker
-{
+class Sales : public Worker {
 public:
     Sales(int id, QString name, QString firstDayDate, int baseRate, QString typeOfWorker, QString login, int chiefId, int superuser) {
         this-> id = id;
@@ -71,7 +69,6 @@ public:
     }
 };
 
-
 QString CountSalary(QString, QString, QString,  vector<shared_ptr<Worker>>);
 QString CountSalaryForAll();
 
@@ -82,8 +79,10 @@ public:
     int idForQML;
     int levelOfSub = 0;
     bool foundCoincidence;
+    QString workersInfo = "aa";
     QString loginForQML;
     QString nameForQML;
+    QString errorMsg;
     QString superuserSub;
     QString idSub;
     QString nameSub;
@@ -97,15 +96,13 @@ public:
     explicit MainCode(QObject *parent = nullptr);
 
 
-    // Переменные для addWorker
-    QString errorMsg;
-
 signals:
     void sendSalaryToQML (QString resultSalary);
     void sendSalaryOfAllWorkersToQML (QString resultSalary);
     void sendErrorMessage (QString errorMesage);
     void openMainMenu(QString nameForQML, QString loginForQML);
     void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub, QString levelOfSubStr);                         // Сигнал для передачи информации о подчиненных
+    void sendWorkersInfoToQML(QString workersInfo);
 
     // Сигналы для addWorker
     void sendErrorMessageForName(QString errorMsg);
@@ -118,15 +115,17 @@ signals:
     void sendErrorMessageForChief(QString errorMsg);
     void sendErrorMessageForSuperuser(QString errorMsg);
     void sendCommonErrorMessage(QString errorMsg);
-
-
+    void openAddWorkerPage();
+    void doesNotHavePermissionToOpenPage();
 
 public slots:
-    void findSubordinates();
+    void findWorkersAndSubordinates();
+    void findWorkersAndSubordinatesForSubPage();
     void logIn(QString, QString);
     void receiveDataFromQMLforCountSalary(QString, QString, QString);
     void receiveDataFromQMLforCountSalaryForAll(QString, QString );
     void addWorker(QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    void fillChiefListModel();
 };
 
 #endif
