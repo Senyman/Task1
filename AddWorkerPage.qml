@@ -112,7 +112,7 @@ TemplatePage {  // Страница для добавления нового с�
             }
             TemplateTextField {
                 id: beginDateForDB
-                placeholderText: "Дата устройства на работу"
+                placeholderText: "Дата устройства на работу: дд.мм.гггг"
             }
             TemplateLabelForAddWorkerPage {
                 id: beginDateErrorMes
@@ -350,7 +350,7 @@ TemplatePage {  // Страница для добавления нового с�
             }
         }
 
-        RowLayout{                          // Кнопки для добавления работника и очистки полей
+        RowLayout{                          // Кнопки для добавления сотрудника и очистки полей
             id: layoutWithButtons
             Layout.alignment: Qt.AlignBottom
             Layout.bottomMargin: 20
@@ -388,12 +388,12 @@ TemplatePage {  // Страница для добавления нового с�
                 }
             }
 
-            CommonButton {              // Добавить работника
+            CommonButton {              // Добавить сотрудника
                 id: addWorker
                 width: 130
                 height: 40
                 Layout.rightMargin: 20
-                text: "Добавить рабочего"
+                text: "Добавить сотрудника"
                 onClicked: {
                     chiefForDB.displayText = "Начальник"
                     nameErrorMes.text = ""

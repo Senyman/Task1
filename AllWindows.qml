@@ -7,8 +7,8 @@ import QtQuick.Layouts 1.12
 Window {
 
     id: allWindows
-    maximumWidth: 950
-    minimumWidth: 950
+    maximumWidth: 800
+    minimumWidth: 800
     maximumHeight: 800
     minimumHeight: 800
     title: qsTr("Приложение")
@@ -24,7 +24,7 @@ Window {
             mainMenuPage.logintext = "Логин: " + loginForQML
             mainMenuPage.nametext = "Имя: " + nameForQML
         }
-        onSendSalaryToQML: calculateSalaryPage.salary = resultSalary                                  // Для расчета зарплаты
+        onSendSalaryToQML: calculateSalaryPage.salary = resultSalary                                   // Для расчета зарплаты
         onSendSalaryOfAllWorkersToQML: calculateSalaryPage.salary = resultSalary             // Для расчета зарплаты всех сотрудников
     }
 

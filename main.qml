@@ -104,14 +104,6 @@ ApplicationWindow {
                 password.text = ""
             }
        }
-
-        CommonButton {
-            id: exit
-            width: 200
-            height: 25
-            text: "Выйти"
-            onClicked: Qt.quit()
-       }
     }
 
     AllWindows {

@@ -6,7 +6,8 @@ void MainCode::logIn(QString login, QString password) {                         
     {
         foundCoincidence = false;
         QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");                             // Создаем объект для работы с базой данных
-        workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");   // Указываю путь к базе данных
+        //workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");   // Указываю путь к базе данных
+        workersDB.setDatabaseName("Workers.db");
         if(!workersDB.open()) qDebug() << "Failed to open database";
         else qDebug() << "DataBase is connected";
         QSqlQuery qry;                                                                                                                        // Объект для запроса информации из БД
@@ -141,7 +142,8 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
    {
         // Заносим в массив workers всех людей с базы данных
        QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
-       workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+       // workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+       workersDB.setDatabaseName("Workers.db");
        if(!workersDB.open()) qDebug() << "Failed to open database";
        else qDebug() << "DataBase is connected";
        QSqlQuery qry;
@@ -162,7 +164,6 @@ vector<shared_ptr<Worker>> MainCode::createWorkers() {
                    else if (typeOfWorkerForArr == "Sales") workers.push_back(make_shared<Sales>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr, superuserForArr));
                    else if(typeOfWorkerForArr == "Manager") workers.push_back(make_shared<Manager>( idForArr, nameForArr, firstDayDateForArr, baseSalaryForArr, typeOfWorkerForArr, loginForArr, chiefIdForArr, superuserForArr));
 
-                   qDebug() << qry.value(0).toString();
                    emit sendWorkersInfoToQML(qry.value(0).toString() + " " + nameForArr);
                }
            }
@@ -798,11 +799,11 @@ void MainCode::addWorker(QString name, QString firstDayDate, QString rate, QStri
      }
      if(superuser == "Да") superuser = "1";
      if(superuser == "Нет") superuser = "0";
-    qDebug() << superuser;
 
     {
          QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
-         workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+         // workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+         workersDB.setDatabaseName("Workers.db");
          if(!workersDB.open()) qDebug() << "Failed to open database";
          else qDebug() << "DataBase is connected";
          QSqlQuery qry;
@@ -825,7 +826,8 @@ void MainCode::addWorker(QString name, QString firstDayDate, QString rate, QStri
 void MainCode::fillChiefListModel() {
     {
         QSqlDatabase workersDB = QSqlDatabase::addDatabase("QSQLITE");
-        workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+        // workersDB.setDatabaseName("C://Users//User//Desktop//WorkersDB//Workers.db");
+        workersDB.setDatabaseName("Workers.db");
         if(!workersDB.open()) qDebug() << "Failed to open database";
         else qDebug() << "DataBase is connected";
         QSqlQuery qry;

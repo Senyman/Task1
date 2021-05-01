@@ -79,7 +79,7 @@ public:
     int idForQML;
     int levelOfSub = 0;
     bool foundCoincidence;
-    QString workersInfo = "aa";
+    QString workersInfo;
     QString loginForQML;
     QString nameForQML;
     QString errorMsg;
