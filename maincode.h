@@ -101,7 +101,7 @@ signals:
     void sendSalaryOfAllWorkersToQML (QString resultSalary);
     void sendErrorMessage (QString errorMesage);
     void openMainMenu(QString nameForQML, QString loginForQML);
-    void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub, QString levelOfSubStr);                         // Сигнал для передачи информации о подчиненных
+    void sendSubordinatesInfoToQML(QString idSub, QString nameSub, QString typeOfWorkerSub, QString firstDayDateSub, QString baseRateSub, QString chiefIdSub, QString levelOfSubStr);
     void sendWorkersInfoToQML(QString workersInfo);
 
     // Сигналы для addWorker
